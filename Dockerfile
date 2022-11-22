@@ -29,3 +29,5 @@ COPY --from=builder /workspace/testnetlink .
 USER $USER:$USER
 
 ENTRYPOINT ["/testnetlink"]
+
+RUN docker push core.harbor.onmetal.de/onmetal/netdata-ipam:latest

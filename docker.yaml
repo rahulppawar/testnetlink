@@ -1,0 +1,25 @@
+name: DockerImage2Harbor
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  IMAGE_NAME: core.harbor.onmetal.de/onmetal/testnetlink
+jobs:
+  push:
+    runs-on: self-hosted
+    if: github.event_name == 'push'
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Build image
+        run: docker build . --file Dockerfile --tag $IMAGE_NAME:latest
+
+      - name: Deploy to Docker registry
+        run: docker push $IMAGE_NAME:latest
