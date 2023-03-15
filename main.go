@@ -4,25 +4,19 @@ import (
 	"fmt"
 	"log"
 	"strings"
+	"time"
 
 	"github.com/vishvananda/netlink"
+	"github.com/vishvananda/netlink/nl"
 )
 
 func main() {
-	Listner("eno1")
+	Listner()
 }
 
-/* List routes belonging to interface name(s) @ifs */
 func Listner(ifs ...string) {
-	for _, iface := range ifs {
-		_, err := netlink.LinkByName(iface)
-		if err != nil {
-			log.Printf("failed to look up interface %s: %s", iface, err)
-			continue
-		}
-	}
 
-	fmt.Println("netlink listner (ignore link local addresses)...")
+	fmt.Println("netlink listner...")
 
 	ch := make(chan netlink.NeighUpdate)
 	done := make(chan struct{})
@@ -33,17 +27,10 @@ func Listner(ifs ...string) {
 
 	for data := range ch {
 		ip := data.Neigh.IP.String()
-
-		// ignore empty IPs
-		if ip == "::" {
+		// ignore empty IP || IPv4 || link local address
+		if ip == "::" || (nl.GetIPFamily(data.Neigh.IP) == netlink.FAMILY_V4) || strings.HasPrefix(ip, "fe80") {
 			continue
 		}
-
-		// ignore link local address
-		if strings.HasPrefix(ip, "fe80") {
-			continue
-		}
-
-		fmt.Printf("%+v\n", data)
+		fmt.Printf("%s,%+v\n", time.Now().Format(time.RFC3339), data)
 	}
 }
