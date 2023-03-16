@@ -8,6 +8,7 @@ import (
 
 	"github.com/vishvananda/netlink"
 	"github.com/vishvananda/netlink/nl"
+	"golang.org/x/sys/unix"
 )
 
 func main() {
@@ -31,6 +32,13 @@ func Listner(ifs ...string) {
 		if ip == "::" || (nl.GetIPFamily(data.Neigh.IP) == netlink.FAMILY_V4) || strings.HasPrefix(ip, "fe80") {
 			continue
 		}
+
+		// Ignore RTM_NEWNEIGH entries with States PROBE, STALE, INCOMPLETE, FAILED stc.
+		if (data.Type == unix.RTM_NEWNEIGH) && (data.Neigh.State != netlink.NUD_REACHABLE) {
+			continue
+		}
+
+		// Here we get entries of RTM_DELNEIGH and RTM_NEWNEIGH + REACHABLE state
 		fmt.Printf("%s,%+v\n", time.Now().Format(time.RFC3339), data)
 	}
 }
